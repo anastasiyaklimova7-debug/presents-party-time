@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Negative Sentences</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #fce4ec;
+        }
+
+        .game-main-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        #game-area {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            width: 98%;
+            max-width: 1600px;
+        }
+
+        .gift-container {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex: 1 1 auto;
+            max-width: 280px;
+            min-width: 60px;
+            position: relative;
+        }
+
+        .gift-image {
+            width: 100%;
+            max-height: 240px;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+
+        @media (min-width: 768px) {
+            .gift-image { max-height: 380px; }
+            #game-area { gap: 15px; }
+        }
+
+        .word-label {
+            background: white;
+            padding: 10px 16px;
+            border-radius: 14px;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            border: 4px solid #f97316;
+            margin-bottom: 12px;
+            font-weight: 900;
+            color: #c2410c; 
+            white-space: nowrap;
+            text-align: center;
+            font-size: clamp(1rem, 2.5vw, 2.2rem); 
+            pointer-events: none;
+        }
+
+        .score-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            border: 4px solid #22c55e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 50;
+        }
+
+        @media (min-width: 768px) {
+            .score-circle { width: 80px; height: 80px; border: 5px solid #22c55e; }
+        }
+
+        .star-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 100;
+            fill: #fbbf24;
+        }
+
+        @keyframes star-burst {
+            0% { transform: translate(0, 0) scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--tr)); opacity: 0; }
+        }
+
+        .star-animate {
+            animation: star-burst 2.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="m-0 p-0 flex flex-col h-screen">
+
+    <div class="h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col relative"
+         style="background-image: url('https://i.postimg.cc/qqV0y0sg/clean_image_(59)_копия.png')">
+
+        <!-- Level Indicator -->
+        <div class="absolute top-4 right-4 md:top-6 md:right-6">
+            <div class="score-circle">
+                <span id="sentence-counter" class="text-lg md:text-xl font-black text-green-600">1/12</span>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="relative z-20 flex flex-col justify-center items-center pt-8 px-4 md:pt-12 text-center">
+            <h1 class="text-3xl md:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-3 tracking-tight">
+                Make negative sentences!
+            </h1>
+            <p class="text-sm md:text-xl text-white font-bold bg-gray-800/50 backdrop-blur-sm px-6 py-2 rounded-full shadow-lg border border-white/20">
+                Swap the gifts to put the words in the correct order.
+            </p>
+        </div>
+
+        <!-- Game Zone -->
+        <div class="game-main-container">
+            <div id="game-area"></div>
+        </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="finish-modal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="bg-white rounded-[50px] p-10 max-w-md w-full text-center shadow-2xl border-[12px] border-green-100">
+            <div class="text-8xl mb-6">🎂</div>
+            <h2 class="text-4xl font-black text-green-600 mb-4">Great Job!</h2>
+            <p class="text-xl text-gray-500 mb-10 font-bold">You've completed all the sentences correctly!</p>
+            <button onclick="resetGame()" 
+                    class="bg-green-500 hover:bg-green-600 text-white font-black py-5 px-10 rounded-full text-2xl shadow-[0_10px_0_rgb(21,128,61)] transition-all active:translate-y-[5px] active:shadow-none w-full uppercase">
+                Restart
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const SENTENCES_DATA = [
+            ["Tom", "isn’t", "playing", "football."],
+            ["Anna", "isn’t", "reading", "a book."],
+            ["Ben", "isn’t", "eating", "an apple."],
+            ["Kate and I", "aren’t", "watching", "TV."],
+            ["Mike and Sam", "aren’t", "running", "in the park."],
+            ["I", "am not", "doing", "my homework."],
+            ["Lucy", "isn’t", "listening", "to music."],
+            ["Jack", "isn’t", "writing", "a letter."],
+            ["Leo and I", "aren’t", "cooking", "dinner."],
+            ["Olivia and Max", "aren’t", "swimming", "now."],
+            ["I", "am not", "talking", "to my friend."],
+            ["Lily", "isn’t", "riding", "a bike."]
+        ];
+
+        const GIFT_IMAGES = [
+            "https://i.postimg.cc/j20KPKHJ/Gemini_Generated_Image_5ik5l65ik5l65ik5.png",
+            "https://i.postimg.cc/Bb9sHsTK/Gemini_Generated_Image_7qbk4s7qbk4s7qbk.png",
+            "https://i.postimg.cc/VvQ1n1qM/Gemini_Generated_Image_inryt4inryt4inry.png",
+            "https://i.postimg.cc/tJQyWy36/Gemini_Generated_Image_q8s3e2q8s3e2q8s3.png",
+            "https://i.postimg.cc/7h8D0D3S/Gemini_Generated_Image_rpdw5krpdw5krpdw.png",
+            "https://i.postimg.cc/4ykZVZ66/Gemini_Generated_Image_ua2tdjua2tdjua2t.png",
+            "https://i.postimg.cc/prbxzxfJ/Gemini_Generated_Image_vec5flvec5flvec5.png"
+        ];
+
+        let currentSentenceIdx = 0;
+        let gameState = [];
+        let selectedIdx = null;
+        let isTransitioning = false;
+
+        const gameArea = document.getElementById('game-area');
+        const sentenceCounter = document.getElementById('sentence-counter');
+        const finishModal = document.getElementById('finish-modal');
+
+        function initSentence() {
+            if (currentSentenceIdx >= SENTENCES_DATA.length) {
+                showFinish();
+                return;
+            }
+
+            isTransitioning = false;
+            selectedIdx = null;
+            const targetWords = SENTENCES_DATA[currentSentenceIdx];
+            
+            sentenceCounter.innerText = `${currentSentenceIdx + 1}/${SENTENCES_DATA.length}`;
+
+            gameState = targetWords.map((word, index) => ({
+                word: word,
+                img: GIFT_IMAGES[index % GIFT_IMAGES.length]
+            }));
+
+            let attempts = 0;
+            do {
+                shuffle(gameState);
+                attempts++;
+            } while (isCorrect() && attempts < 10);
+
+            render();
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function render() {
+            gameArea.innerHTML = '';
+            gameState.forEach((item, index) => {
+                const isSelected = selectedIdx === index;
+                const container = document.createElement('div');
+                container.className = `gift-container flex flex-col items-center cursor-pointer transform transition-all duration-300 ${isSelected ? 'scale-105 z-50' : 'hover:-translate-y-2'}`;
+                
+                container.draggable = true;
+                container.ondragstart = (e) => {
+                    if (isTransitioning) return;
+                    e.dataTransfer.setData('text/plain', index);
+                    container.classList.add('opacity-40');
+                };
+                container.ondragover = (e) => e.preventDefault();
+                container.ondrop = (e) => {
+                    e.preventDefault();
+                    const fromIdx = e.dataTransfer.getData('text/plain');
+                    swap(parseInt(fromIdx), index);
+                };
+                container.ondragend = () => container.classList.remove('opacity-40');
+
+                const label = document.createElement('div');
+                label.className = `word-label transition-colors ${isSelected ? 'bg-orange-100' : ''}`;
+                label.innerText = item.word;
+                
+                const img = document.createElement('img');
+                img.src = item.img;
+                img.className = 'gift-image';
+                img.draggable = false;
+                
+                container.appendChild(label);
+                container.appendChild(img);
+                container.onclick = () => handleItemClick(index);
+                
+                gameArea.appendChild(container);
+            });
+        }
+
+        function handleItemClick(index) {
+            if (isTransitioning) return;
+            if (selectedIdx === null) {
+                selectedIdx = index;
+            } else {
+                if (selectedIdx !== index) swap(selectedIdx, index);
+                selectedIdx = null;
+            }
+            render();
+        }
+
+        function swap(idx1, idx2) {
+            if (isNaN(idx1) || isNaN(idx2)) return;
+            const temp = gameState[idx1];
+            gameState[idx1] = gameState[idx2];
+            gameState[idx2] = temp;
+            render();
+            checkWin();
+        }
+
+        function isCorrect() {
+            const currentString = gameState.map(item => item.word).join(' ');
+            const targetString = SENTENCES_DATA[currentSentenceIdx].join(' ');
+            return currentString === targetString;
+        }
+
+        function burstStars() {
+            const count = 120; 
+            const colors = ['#fbbf24', '#f59e0b', '#ffffff', '#ffedd5', '#22c55e'];
+            
+            for (let i = 0; i < count; i++) {
+                const star = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                const size = Math.random() * 20 + 8; 
+                
+                star.setAttribute("viewBox", "0 0 24 24");
+                star.classList.add("star-particle", "star-animate");
+                
+                const path = i % 2 === 0 
+                    ? "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" 
+                    : "M12,2L14.5,9.5L22,12L14.5,14.5L12,22L9.5,14.5L2,12L9.5,9.5L12,2Z"; 
+                
+                star.innerHTML = `<path d="${path}"/>`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.fill = colors[Math.floor(Math.random() * colors.length)];
+                
+                star.style.left = (Math.random() * 100) + "%";
+                star.style.top = (70 + Math.random() * 20) + "%";
+                
+                const tx = (Math.random() - 0.5) * 600; 
+                const ty = -(Math.random() * 700 + 500); 
+                const tr = Math.random() * 720; 
+                
+                star.style.setProperty('--tx', `${tx}px`);
+                star.style.setProperty('--ty', `${ty}px`);
+                star.style.setProperty('--tr', `${tr}deg`);
+                
+                document.body.appendChild(star);
+                
+                setTimeout(() => star.remove(), 2500);
+            }
+        }
+
+        function checkWin() {
+            if (isCorrect()) {
+                isTransitioning = true;
+                selectedIdx = null;
+                render(); 
+
+                burstStars();
+                
+                const miniBurst = setInterval(() => {
+                    if (isTransitioning) burstStars();
+                    else clearInterval(miniBurst);
+                }, 1500);
+
+                setTimeout(() => {
+                    clearInterval(miniBurst);
+                    currentSentenceIdx++;
+                    initSentence();
+                }, 7000); 
+            }
+        }
+
+        function showFinish() {
+            finishModal.classList.remove('hidden');
+            burstStars();
+            const interval = setInterval(() => {
+                if(finishModal.classList.contains('hidden')) clearInterval(interval);
+                burstStars();
+            }, 1200);
+        }
+
+        function resetGame() {
+            currentSentenceIdx = 0;
+            finishModal.classList.add('hidden');
+            initSentence();
+        }
+
+        window.onload = initSentence;
+    </script>
+</body>
+</html>
