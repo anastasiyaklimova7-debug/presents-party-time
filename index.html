@@ -20,7 +20,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            padding-bottom: 0; /* Изменено с 20px на 0 для опускания подарков */
+            padding-bottom: 0;
             flex-grow: 1;
         }
 
@@ -139,7 +139,7 @@
             </div>
         </div>
 
-        <!-- Game Zone (margin-bottom: -25px чтобы опустить подарки еще ниже) -->
+        <!-- Game Zone -->
         <div class="game-main-container relative z-10" style="margin-bottom: -25px;">
             <div id="game-area"></div>
         </div>
@@ -192,6 +192,49 @@
         const gameArea = document.getElementById('game-area');
         const sentenceCounter = document.getElementById('sentence-counter');
         const finishModal = document.getElementById('finish-modal');
+
+        // Функция генерации праздничного звука (Happy Birthday)
+        function playSuccessSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                
+                // Мотив "Happy Birthday to you" (первая строчка) в виде частот
+                const notes = [
+                    { f: 392.00, t: 0.00, d: 0.15 }, // Hap- (Соль)
+                    { f: 392.00, t: 0.15, d: 0.15 }, // py   (Соль)
+                    { f: 440.00, t: 0.30, d: 0.25 }, // birth- (Ля)
+                    { f: 392.00, t: 0.55, d: 0.25 }, // day  (Соль)
+                    { f: 523.25, t: 0.80, d: 0.25 }, // to   (До)
+                    { f: 493.88, t: 1.05, d: 0.40 }  // you  (Си)
+                ];
+                
+                notes.forEach(note => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    // Тип волны triangle дает мягкий звук музыкальной шкатулки
+                    osc.type = 'triangle'; 
+                    osc.frequency.value = note.f;
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    const startTime = ctx.currentTime + note.t;
+                    
+                    // Плавное появление и длинное затухание для эффекта "колокольчиков"
+                    gain.gain.setValueAtTime(0, startTime);
+                    gain.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + note.d);
+                    
+                    osc.start(startTime);
+                    osc.stop(startTime + note.d + 0.1);
+                });
+            } catch (e) {
+                console.log("Audio Error:", e);
+            }
+        }
 
         function initSentence() {
             if (currentSentenceIdx >= SENTENCES_DATA.length) {
@@ -332,6 +375,9 @@
                 isTransitioning = true;
                 selectedIdx = null;
                 render(); 
+
+                // Воспроизводим праздничный звук
+                playSuccessSound();
 
                 burstStars();
                 
