@@ -20,7 +20,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            padding-bottom: 20px;
+            padding-bottom: 0; /* Изменено с 20px на 0 для опускания подарков */
             flex-grow: 1;
         }
 
@@ -102,44 +102,57 @@
         .star-animate {
             animation: star-burst 2.5s ease-out forwards;
         }
+
+        /* Стили для новой кнопки-инструкции */
+        .instruction-btn {
+            background: white;
+            padding: 16px 32px;
+            border-radius: 18px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border: 5px solid #f97316;
+            font-weight: 900;
+            color: #c2410c; 
+            font-size: clamp(1.2rem, 2vw, 1.6rem);
+            text-align: center;
+            line-height: 1.4;
+            cursor: default;
+        }
     </style>
 </head>
 <body class="m-0 p-0 flex flex-col h-screen">
 
-    <div class="h-screen w-full bg-cover bg-center bg-no-repeat flex flex-col relative"
-         style="background-image: url('https://i.postimg.cc/qqV0y0sg/clean_image_(59)_копия.png')">
+    <div class="h-screen w-full flex flex-col relative overflow-hidden">
+        
+        <!-- Заблюренный фон -->
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat blur-[4px] scale-[1.02]"
+             style="background-image: url('https://i.postimg.cc/qqV0y0sg/clean_image_(59)_копия.png'); z-index: 0;"></div>
+
+        <!-- Instruction Button (Top Left) -->
+        <div class="absolute top-4 left-4 md:top-6 md:left-6 z-10">
+            <button class="instruction-btn">Swap the gifts to make<br>a negative sentence</button>
+        </div>
 
         <!-- Level Indicator -->
-        <div class="absolute top-4 right-4 md:top-6 md:right-6">
+        <div class="absolute top-4 right-4 md:top-6 md:right-6 z-10">
             <div class="score-circle">
                 <span id="sentence-counter" class="text-lg md:text-xl font-black text-green-600">1/12</span>
             </div>
         </div>
 
-        <!-- Instructions -->
-        <div class="relative z-20 flex flex-col justify-center items-center pt-8 px-4 md:pt-12 text-center">
-            <h1 class="text-3xl md:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-3 tracking-tight">
-                Make negative sentences!
-            </h1>
-            <p class="text-sm md:text-xl text-white font-bold bg-gray-800/50 backdrop-blur-sm px-6 py-2 rounded-full shadow-lg border border-white/20">
-                Swap the gifts to put the words in the correct order.
-            </p>
-        </div>
-
-        <!-- Game Zone -->
-        <div class="game-main-container">
+        <!-- Game Zone (margin-bottom: -25px чтобы опустить подарки еще ниже) -->
+        <div class="game-main-container relative z-10" style="margin-bottom: -25px;">
             <div id="game-area"></div>
         </div>
     </div>
 
     <!-- Completion Modal -->
     <div id="finish-modal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-xl flex items-center justify-center p-4">
-        <div class="bg-white rounded-[50px] p-10 max-w-md w-full text-center shadow-2xl border-[12px] border-green-100">
-            <div class="text-8xl mb-6">🎂</div>
-            <h2 class="text-4xl font-black text-green-600 mb-4">Great Job!</h2>
+        <div class="bg-white rounded-[50px] p-10 max-w-md w-full text-center shadow-2xl border-[12px] border-orange-100">
+            <div class="text-8xl mb-6">🎁</div>
+            <h2 class="text-4xl font-black text-orange-600 mb-4">Great Job!</h2>
             <p class="text-xl text-gray-500 mb-10 font-bold">You've completed all the sentences correctly!</p>
             <button onclick="resetGame()" 
-                    class="bg-green-500 hover:bg-green-600 text-white font-black py-5 px-10 rounded-full text-2xl shadow-[0_10px_0_rgb(21,128,61)] transition-all active:translate-y-[5px] active:shadow-none w-full uppercase">
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-black py-5 px-10 rounded-full text-2xl shadow-[0_10px_0_#c2410c] transition-all active:translate-y-[5px] active:shadow-none w-full uppercase">
                 Restart
             </button>
         </div>
